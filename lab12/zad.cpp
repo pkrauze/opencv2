@@ -61,8 +61,15 @@ int main( int argc, char** argv )
   cout << "resolution: " << width << " x " << height << endl;
   cout << "fps: " << fps << endl;
 
+  String fileName = "0.avi";
   bool pause = true;
   bool newFile = true;
+  Size frame_size(width, height);
+  int i = 1;
+
+  newFile = false;
+  VideoWriter oVideoWriter(fileName, CV_FOURCC('X', 'V', 'I', 'D'), fps/2, frame_size, true);
+
   while (true)
     {
       frame1 = frame2.clone();
@@ -73,18 +80,11 @@ int main( int argc, char** argv )
       Point textPoint2 = Point2i(30, 30);
       time_t t = time(0);
       tm* now = localtime(&t);
-      sprintf(data_label_temp, "%d-%02d-%02d-%02d-%02d-%02d", (now->tm_year + 1900), (now->tm_mon + 1), (now->tm_mday), (now->tm_hour), (now->tm_min), (now->tm_sec));
+      sprintf(data_label_temp, "%d%02d%02d%02d%02d%02d", (now->tm_year + 1900), (now->tm_mon + 1), (now->tm_mday), (now->tm_hour), (now->tm_min), (now->tm_sec));
       String label(data_label_temp);
       putText(frame2, label, textPoint, FONT_HERSHEY_PLAIN, 1, Scalar(0,200,0), 2);
-      Size frame_size(width, height);
-      String fileName;
 
-      if(newFile && label != fileName)
-        fileName = label + ".avi";
-      newFile = false;
-
-      VideoWriter oVideoWriter(fileName, -1, fps, frame_size, true);
-      cout << fileName << endl;
+      fileName = to_string(i) + ".avi";
 
       k = waitKey(1);
       if(k == 49 || k == 50 || k == 51)
@@ -99,8 +99,11 @@ int main( int argc, char** argv )
           }
           end = sc.now();
           time_span = static_cast<chrono::duration<double> >(end - start);
-          if(time_span.count() < 10)
+          if(time_span.count() < 5) {
             oVideoWriter.write(frame2);
+          } else
+            option = 50;
+
           putText(frame2, "RECORDING", textPoint2, FONT_HERSHEY_PLAIN, 1, Scalar(0,200,0), 2);
           break;
         case 50:
@@ -108,10 +111,11 @@ int main( int argc, char** argv )
           putText(frame2, "PAUSED", textPoint2, FONT_HERSHEY_PLAIN, 1, Scalar(0,200,0), 2);
           break;
         case 51:
-          pause = true;
-          newFile = true;
-          option = 1;
           putText(frame2, "NEW FILE", textPoint2, FONT_HERSHEY_PLAIN, 1, Scalar(0,200,0), 2);
+          pause = true;
+          i++;
+          oVideoWriter.open(fileName, CV_FOURCC('X', 'V', 'I', 'D'), fps/2, frame_size, true);
+          option = 49;
           break;
         }
 
